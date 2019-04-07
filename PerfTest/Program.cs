@@ -9,7 +9,7 @@ namespace PerfTest
     {
         static void Main(string[] args)
         {
-            BenchmarkRunner.Run<ViaDelegate>();
+            BenchmarkRunner.Run<GetEnvironment>();
         }
     }
 }

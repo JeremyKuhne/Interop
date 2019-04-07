@@ -27,6 +27,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Private>false</Private>
     </ProjectReference>
+    <ProjectReference Include="..\PerfTest\PerfTest.csproj" />
   </ItemGroup>
 
 </Project>
