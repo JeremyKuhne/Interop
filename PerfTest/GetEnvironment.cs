@@ -26,7 +26,7 @@ namespace PerfTest
         private static class Desktop
         {
             // Copy of .NET Framework 4.7.2 implementation
-            [DllImport(Libraries.Kernel32, CharSet = CharSet.Auto, SetLastError = true, BestFitMapping = false)]
+            [DllImport(Libraries.Kernel32, CharSet = CharSet.Auto, SetLastError = true, BestFitMapping = true)]
             internal static extern int GetEnvironmentVariable(string lpName, [Out]StringBuilder lpValue, int size);
         }
 

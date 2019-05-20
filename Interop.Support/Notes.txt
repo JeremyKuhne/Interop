@@ -1,0 +1,105 @@
+﻿d0 6b 2d 68 fd 7f 00 00 00 10 00 00 00 00 00 00 14 00 00 00 21 46 61 73 74 53 65 72 69 61 6c 69 7a 61 74 69 6f 6e 2e 31 04 04 01 03 00 00 00 00 00 00 00 05  Ðk-hý...............!FastSerialization.1............
+00 00 00 54 72 61 63 65 06 e3 07 05 00 00 00 13 00 12 00 2d 00 1d 00 f8 01 38 24 ec 63 0f 02 00 00 80 96 98 00 00 00 00 00 08 00 00 00 80 1c 00 00 0c 00 00  ...Trace.ã.........-...ø.8$ìc....€–˜.........€......
+00 40 42 0f 00 06 00 
+
+EventPipe::WriteEvent (creates EventPipeEventPayload  to send to...)
+EventPipe::WriteEventInternal
+EventPipeFile::WriteEvent
+
+EventPipe::Enable
+
+
+??
+d0 6b 2d 68 fd 7f 00 00 00 10 00 00 00 00 00 00
+
+
+// Header
+
+"!FastSerialization.1" (in UTF-8) is the header (preceeded by the count of chars). Negative character count is null.
+
+(20) 00 00 00
+14 00 00 00
+21 46 61 73 74 53 65 72 69 61 6c 69 7a 61 74 69 6f 6e 2e 31
+
+// Objects list follows Header
+
+- BeginObject tag
+- Serialized Type
+- Serialized Data
+- EndObject tag
+
+// FastSerializer::WriteObject
+    EventTag::BeginObject           04
+
+// FastSerializer::WriteSerializationType
+    EventTag::BeginObject           04
+    EventTag::NullReference         01
+    Type version                    03 00 00 00
+    Minimum reader version          00 00 00 00
+    Full name length                05 00 00 00
+    Name (UTF-8)                    54 72 61 63 65 (Trace)
+    EventTag::EndObject             06
+
+// FastSerializableObject::Serialize(FastSerializer)
+
+// Data Fields for EventPipeFile
+
+(SYSTEMTIME Year|Month|DayOfWeek|Day|Hour|Minute|Second|Milliseconds)
+e3 07       Year (2019)
+05 00       Month (May)
+00 00       Day (Sunday)
+13 00       Day (19)
+12 00       Hour (18)
+2d 00       Minute (45)
+1d 00       Second (29)
+f8 01       Milliseconds (504)
+
+38 24 ec 63 0f 02 00 00     // File open time stamp
+80 96 98 00 00 00 00 00     // Time stamp frequency
+08 00 00 00                 // Pointer size
+80 1c 00 00                 // Process id
+0c 00 00 00                 // Number of processors
+40 42 0f 00                 // ns sampling rate
+
+
+EventTag::EndObject             06
+EventTag::NullReference         00 // No more event blocks
+
+
+
+void EEStartupHelper(COINITIEE fFlags)
+ - EventPipe::Initialize();
+ - InitializeEventTracing();
+ - DiagnosticServer::Initialize();
+
+DiagnosticServer.Initialize()
+ - creates IpcStream ("dotnetcore-diagnostic")
+ - starts DiagnosticsServerThread (passing the IpcStream)
+
+DiagnosticsServerThread(LPVOID lpThreadParameter)
+ - loops waiting for a connection
+ - reads MessageHeader
+ - dispatches DiagnosticMessageType::CollectEventPipeTracing to EventPipeProtocolHelper::CollectTracing
+
+EventPipeProtocolHelper::CollectTracing
+ - reads up to 8K out of the pipe
+    - reads 32bit circular buffer size
+    - reads strOutputPath (ignored)
+    - reads provider configs
+ - starts EventPipe.Enable()
+ - returns the session id EventPipeSessionID
+
+EventPipe::Enable
+ - EventPipe::RunWithCallbackPostponed -> EventPipeConfiguration::CreateSession -> new EventPipeSession
+ - Creates EventPipeFile, which writes itself to the stream via FastSerializer::WriteObject()
+ - That dumps a variety of bits via EventPipeFile::FastSerialize
+
+EventPipeFile::EventPipeFile
+FastSerializer::WriteObject
+
+EtwOnILStubGenerated
+|-FireEtwILStubGenerated
+  |-EventPipeWriteEventILStubGenerated
+  
+EXTERN_C __declspec(selectany) const EVENT_DESCRIPTOR ILStubGenerated = {0x58, 0x0, 0x0, 0x4, 0x58, 0xf, 0x2000};
+#define ILStubGenerated_value 0x58

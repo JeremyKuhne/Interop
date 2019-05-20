@@ -2,6 +2,10 @@
   "profiles": {
     "InteropTest": {
       "commandName": "Project",
+      "environmentVariables": {
+        "COMPlus_EventPipeConfig": "Microsoft-Windows-DotNETRuntime:0x2000:5",
+        "COMPlus_EnableEventPipe": "1"
+      },
       "nativeDebugging": true
     }
   }
