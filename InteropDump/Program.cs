@@ -8,11 +8,10 @@ using Microsoft.Diagnostics.Tracing.Parsers;
 using Microsoft.Diagnostics.Tracing.Parsers.Clr;
 using Microsoft.Diagnostics.Tracing.Session;
 using System;
-using System.Buffers;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace InteropDump
 {
@@ -35,78 +34,92 @@ namespace InteropDump
     {
         static void Main(string[] args)
         {
-            var names = TraceEventSession.GetActiveSessionNames();
-            foreach (string name in names)
-            {
-                if (name.StartsWith("MySession_"))
-                {
-                    TraceEventSession.GetActiveSession(name).Stop();
-                }
-            }
-            //var session = TraceEventSession.GetActiveSession("NetCore");
-            //session = new TraceEventSession($"MySession_{Guid.NewGuid().ToString()}", TraceEventSession)
-
             int id = System.Diagnostics.Process.GetCurrentProcess().Id;
+            Console.WriteLine($"Process id {id}.");
 
-            var task = Task.Run(() =>
-            {
-                using (TraceEventSession session = new TraceEventSession($"MySession_{Guid.NewGuid().ToString()}"))
-                {
-                    // TraceEventProviderOptions options = new TraceEventProviderOptions { ProcessIDFilter = }
-                    session.Source.Clr.ILStubStubGenerated += (ILStubGeneratedTraceData data) =>
-                    {
-                        Console.WriteLine("ILStub");
-                    };
-
-                    session.EnableProvider(ClrTraceEventParser.ProviderGuid, matchAnyKeywords: (ulong)ClrTraceEventParser.Keywords.Interop);
-                    session.Source.Process();
-                }
-                //    DiagnosticsClient client = new DiagnosticsClient();
-                //using (var eventSource = client.StartTracing(out ulong sessionId, new Provider(ClrTraceEventParser.Keywords.All, name: "*")))
-                //{
-                //    ClrTraceEventParser parser = new ClrTraceEventParser(eventSource);
-                //    parser.ILStubStubGenerated += (ILStubGeneratedTraceData data) =>
-                //    {
-                //    };
-
-                //    parser.All += (TraceEvent @event) =>
-                //    {
-                //    };
-
-                //    eventSource.Process();
-                //    //parser.
-                //    //int read = 0;
-                //    //byte[] buffer = ArrayPool<byte>.Shared.Rent(4096);
-                //    //do
-                //    //{
-                //    //    read = reader.Read(buffer);
-                //    //    if (read > 0)
-                //    //    {
-                //    //        string data = Convert.ToBase64String(buffer, 0, read);
-                //    //    }
-                //    //    Thread.Yield();
-                //    //} while (read >= 0);
-                //    //ArrayPool<byte>.Shared.Return(buffer);
-                //}
-            });
-
-            while (task.Status != TaskStatus.Running)
-            {
-                Thread.Yield();
-            }
+            InteropListener listener = new InteropListener();
+            listener.EventWritten += Listener_EventWritten;
+            listener.EnableEvents();
 
             Tests.Test();
-            while (true)
+
+            // Sleep a bit to give the event a chance to post.
+            Thread.Sleep(100);
+        }
+
+        private static void Listener_EventWritten(object sender, ILStubGeneratedEventArgs e)
+        {
+            // This won't come back on the same thread that we created the listener.
+            Console.WriteLine($"Stub generated for {e.ManagedInteropMethodNamespace}.{e.ManagedInteropMethodName}");
+        }
+
+        public static void EtwListener(ManualResetEvent started, int processId)
+        {
+            // This goes through the normal Windows ETW tracing. It works pretty well, but is a bit heavy and
+            // any session will outlive the process if you don't explicitly shut it down. This will lead to
+            // a lack of resources to start a new listener. You can iterate through and close them if needed:
+            //
+            //    var names = TraceEventSession.GetActiveSessionNames();
+            //    foreach (string name in names)
+            //    {
+            //        if (name.StartsWith("MySession_"))
+            //        {
+            //            TraceEventSession.GetActiveSession(name).Stop();
+            //        }
+            //    }
+            //
+            // This uses the Microsoft.Diagnostics.Tracing.TraceEvent NuGet package.
+
+            using (TraceEventSession session = new TraceEventSession($"MySession_{Guid.NewGuid().ToString()}"))
             {
-                Thread.Yield();
-            };
+                TraceEventProviderOptions options = new TraceEventProviderOptions { ProcessIDFilter = new List<int> { processId } };
+                session.Source.Clr.ILStubStubGenerated += (ILStubGeneratedTraceData data) =>
+                {
+                    started.Set();
+                    if (data.ManagedInteropMethodNamespace.StartsWith("InteropTest"))
+                    {
+                        Console.WriteLine("ILStub");
+                    }
+                };
+
+                session.EnableProvider(ClrTraceEventParser.ProviderGuid, matchAnyKeywords: (ulong)ClrTraceEventParser.Keywords.Interop);
+
+                // This call blocks.
+                session.Source.Process();
+            }
+        }
+
+        public static void PipeListener(ManualResetEvent started, int processId)
+        {
+            // You can also register for traditional events through IPC. This is new to .NET Core 3.0.
+            // "dotnet-trace" is the command-line tool for listening. There currently isn't a public surface
+            // area, but I have implemented one (DiagnosticsClient) in Interop.Support.
+
+            DiagnosticsClient client = new DiagnosticsClient(processId);
+
+            Stream stream = client.StartTracing(
+                out ulong sessionId,
+                new Provider(ClrTraceEventParser.Keywords.Interop));
+            started.Set();
+
+            // This will hang up waiting for the first object to arrive so we have to set the event before this.
+            using (var eventSource = new EventPipeEventSource(stream))
+            {
+                ClrTraceEventParser parser = new ClrTraceEventParser(eventSource);
+                parser.ILStubStubGenerated += (ILStubGeneratedTraceData data) =>
+                {
+                    Console.WriteLine("ILStub");
+                };
+
+                // This call blocks.
+                eventSource.Process();
+            }
         }
     }
 
-
-
     public static class Tests
     {
+        // The method is here to avoid getting inlined before we hook events.
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void Test()
         {

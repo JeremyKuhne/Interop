@@ -81,9 +81,9 @@ namespace Interop.Support.Trace
             return pipe;
         }
 
-        public EventPipeEventSource StartTracing(out ulong sessionId, params Provider[] providers)
+        public Stream StartTracing(out ulong sessionId, params Provider[] providers)
         {
-            return new EventPipeEventSource(StartTrace(providers, out sessionId));
+            return StartTrace(providers, out sessionId);
         }
 
         public ulong StopTracing(ulong sessionId)
@@ -101,7 +101,9 @@ namespace Interop.Support.Trace
         private Stream OpenPipe()
         {
             // Windows only, Unix communicates via Socket
-            var pipe = new NamedPipeClientStream(".", _pipeName, PipeDirection.InOut, PipeOptions.None, TokenImpersonationLevel.Impersonation);
+            var pipe =
+                new NamedPipeClientStream(_pipeName);
+                // new NamedPipeClientStream(".", _pipeName, PipeDirection.InOut, PipeOptions.None, TokenImpersonationLevel.Impersonation);
             pipe.Connect(3000);
             return pipe;
         }
