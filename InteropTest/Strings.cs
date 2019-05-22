@@ -32,7 +32,7 @@ namespace InteropTest
         //
         //      .maxstack 4
         //      .locals (
-        //          int32,                                      // 0: Incoming length
+        //          int32,                                      // 0: Tracker for cleanup
         //          native int,                                 // 1: Address of first char in string
         //          string pinned,                              // 2: Pinned string pointer
         //          int64,                                      // 3: Outgoing length

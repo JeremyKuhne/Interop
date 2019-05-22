@@ -97,6 +97,12 @@ EventPipe::Enable
 EventPipeFile::EventPipeFile
 FastSerializer::WriteObject
 
+    MethodDesc* UMThunkMarshInfo::GetILStubMethodDesc(MethodDesc* pInvokeMD, PInvokeStaticSigInfo* pSigInfo, DWORD dwStubFlags)
+    MethodDesc* NDirect::CreateCLRToNativeILStub()
+    MethodDesc* CreateInteropILStub()
+    static void CreateNDirectStubWorker()
+    void FinishEmit(MethodDesc* pStubMD)
+
 EtwOnILStubGenerated
 |-FireEtwILStubGenerated
   |-EventPipeWriteEventILStubGenerated
