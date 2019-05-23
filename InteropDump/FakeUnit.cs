@@ -1,7 +1,12 @@
-﻿using System;
+﻿// Licensed under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using System;
 
 namespace Xunit
 {
+    // Simple stubs to allow including Xunit attributed code without including Xunit.
+
     public class FactAttribute : Attribute
     {
     }

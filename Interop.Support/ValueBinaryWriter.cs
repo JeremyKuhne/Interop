@@ -88,7 +88,6 @@ namespace Interop.Support
             // Need an extra two bytes for a null char
             int lengthInBytes = (value.Length + 1) * sizeof(char);
             EnsureCapacity(Position + lengthInBytes);
-            Span<byte> next = _bytes.Slice(_pos);
             fixed(char* c = value)
             {
                 Span<byte> stringData = new Span<byte>(c, lengthInBytes);

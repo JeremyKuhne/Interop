@@ -8,6 +8,19 @@ namespace Interop.Support.Trace
 {
     public class ILStubGeneratedEventArgs : EventArgs
     {
+        // This event is generated in ILStubState::FinishEmit()
+        //
+        // PCODE MethodDesc::DoPrestub(MethodTable *pDispatchingMT)
+        // PCODE GetStubForInteropMethod(MethodDesc* pMD, DWORD dwStubFlags, MethodDesc **ppStubMD)
+        // PCODE NDirect::GetStubForILStub(NDirectMethodDesc* pNMD, MethodDesc** ppStubMD, DWORD dwStubFlags)
+        // MethodDesc* NDirect::CreateCLRToNativeILStub()
+        // MethodDesc* CreateInteropILStub()
+        // static void CreateNDirectStubWorker()
+        // void FinishEmit(MethodDesc* pStubMD)
+        // |-EtwOnILStubGenerated
+        //   |-FireEtwILStubGenerated
+        //     |-EventPipeWriteEventILStubGenerated
+
         private EventWrittenEventArgs _event;
 
         public ILStubGeneratedEventArgs(EventWrittenEventArgs eventArgs)

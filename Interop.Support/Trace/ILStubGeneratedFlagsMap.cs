@@ -1,7 +1,6 @@
 ﻿// Licensed under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-
 namespace Interop.Support.Trace
 {
     public enum ILStubGeneratedFlagsMap : uint

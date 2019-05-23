@@ -96,13 +96,13 @@ namespace InteropTest
         //
         //          call            native int [System.Private.CoreLib] System.StubHelpers.StubHelpers::GetStubContext()  // JIT Intrinsic
         //          ldc.i4.s        0x20                        // push '0x20' int onto the stack
-        //          add                                         // add '0x20' and ??? (some ** ?)
+        //          add                                         // add '0x20' to address that was put on the stack
         //          ldind.i                                     // load (indirect) native int from stack address (e.g. *) to stack
         //          ldind.i                                     // again (should be the function pointer)
         //
         //   >> Call the native method
         //
-        //         calli           unmanaged stdcall int64(native int,int64)
+        //          calli           unmanaged stdcall int64(native int,int64)
         //
         //  *** Unmarshal return value and arguments ***
         //  --------------------------------------------
@@ -127,6 +127,12 @@ namespace InteropTest
         // 
         //   // IL stub's secret MethodDesc parameter (JitFlags::JIT_FLAG_PUBLISH_SECRET_PARAM)
         //   #define REG_SECRET_STUB_PARAM    REG_R10
+        // UINT16      m_wFlags3AndTokenRemainder;
+        // BYTE        m_chunkIndex;
+        // BYTE        m_bFlags2;
+        // WORD        m_wSlotNumber;
+        // WORD        m_wFlags;
+
 
         [DllImport(Libraries.NativeLibrary, EntryPoint = "StringPass", CharSet = CharSet.Unicode)]
         private static extern IntPtr StringPassIn([In]string value, int length);

@@ -44,7 +44,7 @@ namespace InteropDump
             Tests.Test();
 
             // Sleep a bit to give the event a chance to post.
-            Thread.Sleep(100);
+            Thread.Sleep(1000);
         }
 
         private static void Listener_EventWritten(object sender, ILStubGeneratedEventArgs e)
@@ -95,9 +95,9 @@ namespace InteropDump
             // "dotnet-trace" is the command-line tool for listening. There currently isn't a public surface
             // area, but I have implemented one (DiagnosticsClient) in Interop.Support.
 
-            DiagnosticsClient client = new DiagnosticsClient(processId);
+            EventPipeClient client = new EventPipeClient(processId);
 
-            Stream stream = client.StartTracing(
+            Stream stream = client.StartSession(
                 out ulong sessionId,
                 new Provider(ClrTraceEventParser.Keywords.Interop));
             started.Set();
@@ -124,6 +124,7 @@ namespace InteropDump
         public static void Test()
         {
             Strings s = new Strings();
+            s.StringPins();
             s.StringPins();
         }
     }

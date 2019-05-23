@@ -1,12 +1,16 @@
 ﻿// Licensed under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using Microsoft.Diagnostics.Tracing.Parsers;
 using System;
 using System.Diagnostics.Tracing;
 using System.Reflection;
 
 namespace Interop.Support.Trace
 {
+    /// <summary>
+    /// Simple listener for listening to interop trace events.
+    /// </summary>
     public class InteropListener
     {
         public static EventSource RuntimeEventSource =
@@ -21,13 +25,22 @@ namespace Interop.Support.Trace
             _listener.EventWritten += EventListener_EventWritten;
         }
 
+        /// <summary>
+        /// Fired when an interop event is written.
+        /// </summary>
         public event EventHandler<ILStubGeneratedEventArgs> EventWritten;
 
+        /// <summary>
+        /// Start listening to interop trace events.
+        /// </summary>
         public void EnableEvents()
         {
-            _listener.EnableEvents(RuntimeEventSource, EventLevel.Verbose, (EventKeywords)0x2000);
+            _listener.EnableEvents(RuntimeEventSource, EventLevel.Verbose, (EventKeywords)ClrTraceEventParser.Keywords.Interop);
         }
 
+        /// <summary>
+        /// Stop listening to interop trace events.
+        /// </summary>
         public void DisableEvents()
         {
             _listener.DisableEvents(RuntimeEventSource);
