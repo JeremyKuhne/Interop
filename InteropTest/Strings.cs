@@ -32,20 +32,20 @@ namespace InteropTest
         //
         //      .maxstack 4
         //      .locals (
-        //          int32,                                      // 0: Tracker for cleanup
-        //          native int,                                 // 1: Address of first char in string
-        //          string pinned,                              // 2: Pinned string pointer
-        //          int64,                                      // 3: Outgoing length
-        //          int64,                                      // 4: Return value
-        //          int64)                                      // 5: Return value
+        //          int32,                              // 0: Tracker for cleanup
+        //          native int,                         // 1: Address of first char in string
+        //          string pinned,                      // 2: Pinned string pointer
+        //          int64,                              // 3: Outgoing length
+        //          int64,                              // 4: Return value
+        //          int64)                              // 5: Return value
         //
         //  *** Marshal the arguments ***
         //  -----------------------------
         //
         //   >> Put zero into locals[0] <<
         //
-        //          ldc.i4.0                                    // push '0' int onto the stack
-        //          stloc.0                                     // pop the zero into locals[0]
+        //          ldc.i4.0                            // push '0' int onto the stack
+        //          stloc.0                             // pop the zero into locals[0]
         //
         //   >> Handle the first argument (string) <<
         //
@@ -53,14 +53,14 @@ namespace InteropTest
         //
         //          >> Put IntPtr.Zero into locals[1] <<
         //
-        //          ldc.i4.0                                    // push '0' int onto the stack
-        //          conv.i                                      // convert the stack int into a native int (IntPtr)
-        //          stloc.1                                     // pop the native int to locals[1]
+        //          ldc.i4.0                            // push '0' int onto the stack
+        //          conv.i                              // convert the stack int into a native int (IntPtr)
+        //          stloc.1                             // pop the native int to locals[1]
         //
         //          >> If the string is null, goto handling the second argument <<
         //
-        //          ldarg.0                                     // load argument 0 (string) onto the stack
-        //          brfalse         IL_0015                     // pop if false (null) jump to IL_0015
+        //          ldarg.0                             // load argument 0 (string) onto the stack
+        //          brfalse         IL_0015             // pop if false (null) jump to IL_0015
         //
         //          >> Pin the string into locals[2] and put the address in locals[1] <<
         //
@@ -77,9 +77,9 @@ namespace InteropTest
         //
         //          >> Convert the length to a long and put it in locals[3] <<
         //
-        //          ldarg.1                                     // push argument 1 (length) to stack
-        //          conv.i8                                     // convert it to long
-        //          stloc.3                                     // pop it to locals[3]
+        //          ldarg.1                             // push argument 1 (length) to stack
+        //          conv.i8                             // convert it to long
+        //          stloc.3                             // pop it to locals[3]
         //          nop
         //          nop
         //          nop
@@ -89,18 +89,24 @@ namespace InteropTest
         //
         //   >> Push the arguments onto the stack <<
         //
-        //          ldloc.1                                     // push locals[1] to stack (&_firstChar, the first arg)
-        //          ldloc.3                                     // push locals[3] to stack (length, the second arg)
+        //          ldloc.1                             // push locals[1] to stack (&_firstChar, the first arg)
+        //          ldloc.3                             // push locals[3] to stack (length, the second arg)
         //
         //   >> JIT intrinsic to fill in the actual method pointer (IL for identical P/Invokes is shared) <<
+        //       [see NDirectStubLinker::DoNDirect()]
         //
-        //          call            native int [System.Private.CoreLib] System.StubHelpers.StubHelpers::GetStubContext()  // JIT Intrinsic
-        //          ldc.i4.s        0x20                        // push '0x20' int onto the stack
-        //          add                                         // add '0x20' to address that was put on the stack
-        //          ldind.i                                     // load (indirect) native int from stack address (e.g. *) to stack
-        //          ldind.i                                     // again (should be the function pointer)
+        //          // Call the JIT Intrinsic to get the stub context
         //
-        //   >> Call the native method
+        //          call            native int [System.Private.CoreLib] System.StubHelpers.StubHelpers::GetStubContext()
+        //
+        //          // Dereference NDirectMethodDesc.m_pWriteableData->NDirectWriteableData.m_pNDirectTarget
+        //
+        //          ldc.i4.s        0x20                // push '0x20' int onto the stack
+        //          add                                 // add '0x20' to address that was put on the stack
+        //          ldind.i                             // load (indirect) native int from stack address (e.g. *) to stack
+        //          ldind.i                             // again (should be the function pointer)
+        //
+        //   >> Call the target
         //
         //          calli           unmanaged stdcall int64(native int,int64)
         //
@@ -108,10 +114,10 @@ namespace InteropTest
         //  --------------------------------------------
         //
         //         nop
-        //         stloc.s         0x5                         // pop the return value into locals[5]
-        //         ldloc.s         0x5                         // push locals[5]
-        //         stloc.s         0x4                         // pop to locals[4]
-        //         ldloc.s         0x4                         // push locals[4]
+        //         stloc.s         0x5                 // pop the return value into locals[5]
+        //         ldloc.s         0x5                 // push locals[5]
+        //         stloc.s         0x4                 // pop to locals[4]
+        //         ldloc.s         0x4                 // push locals[4]
         //         nop
         //         nop
         //         nop
@@ -119,19 +125,26 @@ namespace InteropTest
         //         nop
         //         ret
 
+        // -----------------------------
+        // StubHelpers::GetStubContext()
+        // -----------------------------
         //
-        //   First four integers are passed in RCX, RDX, R8, R9
-        // https://github.com/dotnet/coreclr/blob/a1757ce8e80cd089d9dc31ba2d4e3246e387a6b8/Documentation/botr/clr-abi.md
+        //  1. Jumps to location that loads the actual MethodDesc pointer, and then
+        //  2. Jumps to NDirectImportThunk (which saves/restores state), and then
+        //  3. Jumps to NDirectImportWorker()
+        //
+        // NDirectImportWorker ensures the dll is loaded and ready to run.
+        //
+        //  1. Saves ::GetLastError()
+        //  2. Wraps a "try .. catch" for PAL_SEHException
+        //  3. Installs an unwind and continue handler
+        //  4. Restores the saved ::GetLastError()
+        //
+        // https://github.com/dotnet/coreclr/blob/master/Documentation/botr/clr-abi.md#pinvokes
         //
         // The VM Shares IL stubs based on signatures
         // 
-        //   // IL stub's secret MethodDesc parameter (JitFlags::JIT_FLAG_PUBLISH_SECRET_PARAM)
-        //   #define REG_SECRET_STUB_PARAM    REG_R10
-        // UINT16      m_wFlags3AndTokenRemainder;
-        // BYTE        m_chunkIndex;
-        // BYTE        m_bFlags2;
-        // WORD        m_wSlotNumber;
-        // WORD        m_wFlags;
+        //   First four integers are passed in RCX, RDX, R8, R9
 
 
         [DllImport(Libraries.NativeLibrary, EntryPoint = "StringPass", CharSet = CharSet.Unicode)]

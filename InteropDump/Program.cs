@@ -43,8 +43,8 @@ namespace InteropDump
 
             Tests.Test();
 
-            // Sleep a bit to give the event a chance to post.
-            Thread.Sleep(1000);
+            // Sleep a bit to give the events a chance to post.
+            Thread.Sleep(5000);
         }
 
         private static void Listener_EventWritten(object sender, ILStubGeneratedEventArgs e)
@@ -75,7 +75,6 @@ namespace InteropDump
                 TraceEventProviderOptions options = new TraceEventProviderOptions { ProcessIDFilter = new List<int> { processId } };
                 session.Source.Clr.ILStubStubGenerated += (ILStubGeneratedTraceData data) =>
                 {
-                    started.Set();
                     if (data.ManagedInteropMethodNamespace.StartsWith("InteropTest"))
                     {
                         Console.WriteLine("ILStub");
@@ -83,6 +82,7 @@ namespace InteropDump
                 };
 
                 session.EnableProvider(ClrTraceEventParser.ProviderGuid, matchAnyKeywords: (ulong)ClrTraceEventParser.Keywords.Interop);
+                started.Set();
 
                 // This call blocks.
                 session.Source.Process();
@@ -96,7 +96,6 @@ namespace InteropDump
             // area, but I have implemented one (DiagnosticsClient) in Interop.Support.
 
             EventPipeClient client = new EventPipeClient(processId);
-
             Stream stream = client.StartSession(
                 out ulong sessionId,
                 new Provider(ClrTraceEventParser.Keywords.Interop));
@@ -124,8 +123,8 @@ namespace InteropDump
         public static void Test()
         {
             Strings s = new Strings();
-            s.StringPins();
-            s.StringPins();
+            s.StringPassDirect();
+            s.StringPassDirect();
         }
     }
 }

@@ -106,3 +106,13 @@ void __stdcall FlipPointers(void** first, void** second)
     *first = *second;
     *second = temp;
 }
+
+void* __stdcall VoidReturn()
+{
+    return (void*)0xDEADBEEF;
+}
+
+void __stdcall VoidPass(void* handle)
+{
+    // Do nothing
+}

@@ -31,7 +31,7 @@ namespace Interop.Support.Trace
         public ushort ClrInstanceId => (ushort)_event.Payload[0];
         public ulong ModuleId => (ulong)_event.Payload[1];
         public ulong StubMethodID => (ulong)_event.Payload[2];
-        public ILStubGeneratedFlagsMap StubFlags => (ILStubGeneratedFlagsMap)_event.Payload[3];
+        public ILStubGeneratedFlagsMap StubFlags => (ILStubGeneratedFlagsMap)(uint)_event.Payload[3];
         public uint ManagedInteropMethodToken => (uint)_event.Payload[4];
         public string ManagedInteropMethodNamespace => (string)_event.Payload[5];
         public string ManagedInteropMethodName => (string)_event.Payload[6];

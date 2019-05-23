@@ -33,3 +33,6 @@ extern "C" __declspec (dllexport) void __stdcall SwapPoints(Point* points, int c
 extern "C" __declspec (dllexport) void* __stdcall IntsPointer(int* values);
 extern "C" __declspec (dllexport) void* __stdcall PointsPointer(Point* points);
 extern "C" __declspec (dllexport) void __stdcall FlipPointers(void** first, void** second);
+
+extern "C" __declspec (dllexport) void* __stdcall VoidReturn();
+extern "C" __declspec (dllexport) void __stdcall VoidPass(void* handle);

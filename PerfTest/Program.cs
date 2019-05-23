@@ -9,7 +9,7 @@ namespace PerfTest
     {
         static void Main(string[] args)
         {
-            BenchmarkRunner.Run<StringPass>();
+            BenchmarkRunner.Run<NoClassNeeded>();
         }
     }
 }

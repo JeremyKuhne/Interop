@@ -48,7 +48,10 @@ namespace Interop.Support.Trace
 
         private void EventListener_EventWritten(object sender, EventWrittenEventArgs e)
         {
-            EventWritten?.Invoke(sender, new ILStubGeneratedEventArgs(e));
+            if (e.EventName?.Equals("ILStubGenerated") ?? false)
+            {
+                EventWritten?.Invoke(sender, new ILStubGeneratedEventArgs(e));
+            }
         }
 
         private class SimpleListener : EventListener
