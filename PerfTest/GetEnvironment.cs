@@ -12,6 +12,10 @@ using System.Buffers;
 
 namespace PerfTest
 {
+    /// <summary>
+    /// This is a case study showing the evolution of the GetEnvironment code
+    /// for desktop to core and additional optimizations.
+    /// </summary>
     [MemoryDiagnoser]
     public class GetEnvironment
     {
@@ -26,7 +30,7 @@ namespace PerfTest
         private static class Desktop
         {
             // Copy of .NET Framework 4.7.2 implementation
-            [DllImport(Libraries.Kernel32, CharSet = CharSet.Auto, SetLastError = true, BestFitMapping = false)]
+            [DllImport(Libraries.Kernel32, CharSet = CharSet.Auto, SetLastError = true, BestFitMapping = true)]
             internal static extern int GetEnvironmentVariable(string lpName, [Out]StringBuilder lpValue, int size);
         }
 

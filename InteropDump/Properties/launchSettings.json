@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "InteropDump": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

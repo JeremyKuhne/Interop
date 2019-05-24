@@ -16,6 +16,8 @@ namespace InteropTest
         [Fact]
         public void Sum()
         {
+            // The aray will be pinned, so the first value will change to 42.
+
             int[] values = new int[] { 1, 2, 3, 4 };
             int result = SumNoAttributes(values, values.Length);
             Assert.Equal(10, result);
@@ -28,11 +30,11 @@ namespace InteropTest
         [Fact]
         public void SumIn()
         {
+            // [In] makes NO difference. The array is still pinned, so the values will be changed.
+
             int[] values = new int[] { 1, 2, 3, 4 };
             int result = SumInAttributes(values, values.Length);
             Assert.Equal(10, result);
-
-            // [In] makes NO difference. The array is still pinned, so the values will be changed.
             Assert.Equal(42, values[0]);
         }
 
@@ -42,11 +44,11 @@ namespace InteropTest
         [Fact]
         public void SumOut()
         {
+            // [Out] makes NO difference. The array is still pinned, so the values will be changed.
+
             int[] values = new int[] { 1, 2, 3, 4 };
             int result = SumOutAttributes(values, values.Length);
             Assert.Equal(10, result);
-
-            // [Out] makes NO difference. The array is still pinned, so the values will be changed.
             Assert.Equal(42, values[0]);
         }
 
@@ -56,6 +58,8 @@ namespace InteropTest
         [Fact]
         public unsafe void IntsArrayDoesNotCopy()
         {
+            // Another way to see that int[] pins
+
             int[] values = new int[1];
             fixed (void* i = values)
             {
@@ -69,6 +73,8 @@ namespace InteropTest
         [Fact]
         public unsafe void IntsArrayOutDoesNotCopy()
         {
+            // Again, [Out] makes no difference
+
             int[] values = new int[1];
             fixed (void* i = values)
             {
@@ -82,6 +88,8 @@ namespace InteropTest
         [Fact]
         public unsafe void PointsArrayCopies()
         {
+            // Arrays of non-primitive types copy
+
             Point[] points = new Point[1];
             fixed (void* p = points)
             {
@@ -95,6 +103,8 @@ namespace InteropTest
         [Fact]
         public unsafe void PointsArrayOutCopies()
         {
+            // [Out] makes no difference, it still copies
+
             Point[] points = new Point[1];
             fixed (void* p = points)
             {
@@ -108,6 +118,8 @@ namespace InteropTest
         [Fact]
         public unsafe void PointsArrayInOutCopies()
         {
+            // [In, Out] makes no difference, it still copies
+
             Point[] points = new Point[1];
             fixed (void* p = points)
             {
@@ -121,6 +133,9 @@ namespace InteropTest
         [Fact()]
         public unsafe void StopAlready()
         {
+            // Doesn't corrupt state, but doesn't work. Native code
+            // recieves a copy of the data.
+
             int[] first = new int[] { 1, 2 };
             int[] second = new int[] { 3, 4 };
 
@@ -129,9 +144,6 @@ namespace InteropTest
             {
                 FlipIntPointers(&f, &s);
             }
-
-            // Doesn't corrupt state, but doesn't work. Native code
-            // recieves a copy of the data.
 
             Assert.Equal(new int[] { 1, 2 }, first);
             Assert.Equal(new int[] { 3, 4 }, second);
@@ -143,12 +155,12 @@ namespace InteropTest
         [Fact(Skip = "Corrupts state.")]
         public unsafe void NowYoureJustBeingRude()
         {
-            int[] first = new int[] { 1, 2 };
-            int[] second = new int[] { 3, 4 };
-
             // This actually creates a copy of the array data. Trying to set the pointers on
             // the native side will give you corrupted arrays on this side. In Debug the
             // runtime will crash.
+
+            int[] first = new int[] { 1, 2 };
+            int[] second = new int[] { 3, 4 };
 
             FlipIntArrays(ref first, ref second);
             Assert.Equal(new int[] { 1, 2 }, second);

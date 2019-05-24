@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using Xunit;
 
@@ -17,6 +18,84 @@ namespace InteropTest
         {
             int doubled = Double(6);
             Assert.Equal(12, doubled);
+        }
+
+        [Fact]
+        public void DefaultImportAttributes()
+        {
+            // This is what the IL looks like for "private static extern int Double(int value);"
+            //
+            //   .method private hidebysig static pinvokeimpl("NativeLibrary.dll" winapi)
+            //           int32  Double(int32 'value') cil managed preservesig
+            //   {
+            //   }
+            //
+            // [DllImport] is a "Pseudo" Attribute (ECMA-335 I I.21.2.1 - see PseudoCustomAttribute
+            // in System.Private.CoreLib). It sets the "pinvokeimpl" bit for the method, which has
+            // the following IL definition:
+            //
+            //   pinvokeimpl ‘(’ QSTRING [ as QSTRING ] PinvAttr * ‘)’
+            //
+            // Valid PinvAttr options are:
+            //
+            //  ansi | autochar | unicode                           (i.e. CharSet)
+            //  [pmCharSetAnsi | pmCharSetAuto | pmCharSetUnicode]
+            //  cdecl | fastcall | stdcall | thiscall | platformapi (i.e. CallingConvention)
+            //  nomangle                                            (i.e. ExactSpelling = true)
+            //  lasterr                                             (i.e. SetLastError = true)
+            //
+            // "pinvokeimpl" metadata is stored in the "ImplMap" metadata table, which maps to the
+            // runtime flags defined in "CorPinvokeMap"
+            //
+            //   il               | value  | CorPinvokeMap (corhdr.h)
+            //   -----------------|--------|----------------------------------
+            //   nomangle         | 0x0001 | pmNoMangle
+            //   ansi             | 0x0002 | pmCharSetAnsi
+            //   unicode          | 0x0004 | pmCharSetUnicode
+            //   autochar         | 0x0006 | pmCharSetAuto
+            //   lasterr          | 0x0040 | pmSupportsLastError
+            //   winapi           | 0x0100 | pmCallConvWinapi
+            //   cdecl            | 0x0200 | pmCallConvCdecl
+            //   stdcall          | 0x0300 | pmCallConvStdcall
+            //   thiscall         | 0x0400 | pmCallConvThiscall
+            //   fastcall         | 0x0500 | pmCallConvFastcall
+            //    [** below are not part of ECMA-335 and only apply to ANSI on Windows **]
+            //   bestfit:on       | 0x0010 | pmBestFitEnabled
+            //   bestfit:off      | 0x0020 | pmBestFitDisabled
+            //   charmaperror:on  | 0x1000 | pmThrowOnUnmappableCharEnabled
+            //   charmaperror:off | 0x2000 | pmThrowOnUnmappableCharDisabled
+            //
+            // PInvokeStaticSigInfo::DllImportInit reads in the metadata for the PInvoke. If CharSet is unspecified,
+            // this method assumes ANSI. If CharSet is Auto, it becomes Unicode for Windows and ANSI for Unix.
+            // 
+            // ANSI conversion ultimately goes through Marshal.StringToAnsiString() and 
+            // Unix gets UTF-8 conversion as the ANSI conversion code in the runtime's Unix PAL (unicode.cpp) presumes
+            // the active code page is UTF-8.
+
+            MethodInfo mi = typeof(Basics).GetMethod("Double", BindingFlags.NonPublic | BindingFlags.Static);
+            DllImportAttribute import = mi.GetCustomAttribute<DllImportAttribute>();
+            Assert.False(import.BestFitMapping);
+            Assert.Equal(CallingConvention.Winapi, import.CallingConvention);
+            Assert.Equal(CharSet.None, import.CharSet);
+            Assert.Equal("Double", import.EntryPoint);
+            Assert.False(import.ExactSpelling);
+            Assert.True(import.PreserveSig);
+            Assert.False(import.SetLastError);
+            Assert.Equal("NativeLibrary.dll", import.Value);
+
+            // These are not described in the ECMA-335 specification
+            Assert.False(import.ThrowOnUnmappableChar);
+            Assert.False(import.BestFitMapping);
+
+
+            // CSTRMarshaler
+
+
+            // ThrowOnUnmappableChar and BestFitMapping ultimately map to WideCharToMultiByte in Marshal.StringToAnsiString().
+            //
+            //   https://docs.microsoft.com/en-us/windows/desktop/api/stringapiset/nf-stringapiset-widechartomultibyte
+            //
+            // Note that on Unix the CoreCLR implements this in /pal/src/locale/unicode.cpp. BestFitMapping is not supported.
         }
 
         // When looking for an import, the expected method name is
