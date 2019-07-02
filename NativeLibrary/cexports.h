@@ -19,6 +19,7 @@ extern "C" __declspec (dllexport) int AddCDecl(int a, int b);
 
 extern "C" __declspec (dllexport) int __stdcall CharToIntW(wchar_t value);
 extern "C" __declspec (dllexport) void* __stdcall StringPass(wchar_t* value, int count);
+extern "C" __declspec (dllexport) errno_t __stdcall CopyString(wchar_t* source, wchar_t* destination, int destinationLength);
 
 extern "C" __declspec (dllexport) void* __stdcall DoubleByRef(int* value);
 

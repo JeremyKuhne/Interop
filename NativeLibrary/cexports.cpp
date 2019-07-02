@@ -50,6 +50,11 @@ void* __stdcall StringPass(wchar_t* value, int count)
     return (void*)value;
 }
 
+errno_t __stdcall CopyString(wchar_t* source, wchar_t* destination, int destinationLength)
+{
+    return wcscpy_s(destination, destinationLength, source);
+}
+
 void* __stdcall DoubleByRef(int* value)
 {
     *value = *value + *value;
@@ -109,7 +114,10 @@ void __stdcall FlipPointers(void** first, void** second)
 
 void* __stdcall VoidReturn()
 {
+#pragma warning(push)
+#pragma warning(disable:4312) // Not a real address, don't care that it is unsafe
     return (void*)0xDEADBEEF;
+#pragma warning(pop)
 }
 
 void __stdcall VoidPass(void* handle)
