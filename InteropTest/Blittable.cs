@@ -16,6 +16,7 @@ namespace InteropTest
                 Assert.Throws<ArgumentException>(() => GCHandle.Alloc(new StructWithBool(), GCHandleType.Pinned)).Message);
         }
 
+        [StructLayout(LayoutKind.Sequential)] // Suppresses CS0649 warning, but otherwise not necessary
         private struct StructWithBool
         {
             // Attributing won't change blittability
