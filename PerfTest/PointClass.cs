@@ -3,23 +3,22 @@
 
 using System.Runtime.InteropServices;
 
-namespace PerfTest
+namespace PerfTest;
+
+// Essentially telling our class to layout like a struct
+[StructLayout(LayoutKind.Sequential)]
+public class PointClass
 {
-    // Essentially telling our class to layout like a struct
-    [StructLayout(LayoutKind.Sequential)]
-    public class PointClass
+    public int X;
+    public int Y;
+
+    public PointClass()
     {
-        public int X;
-        public int Y;
+    }
 
-        public PointClass()
-        {
-        }
-
-        public PointClass(int x, int y)
-        {
-            X = x;
-            Y = y;
-        }
+    public PointClass(int x, int y)
+    {
+        X = x;
+        Y = y;
     }
 }

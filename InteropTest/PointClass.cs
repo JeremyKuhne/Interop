@@ -3,18 +3,17 @@
 
 using System.Runtime.InteropServices;
 
-namespace InteropTest
-{
-    [StructLayout(LayoutKind.Sequential)]
-    public class PointClass
-    {
-        public int X;
-        public int Y;
+namespace InteropTest;
 
-        public PointClass(int x, int y)
-        {
-            X = x;
-            Y = y;
-        }
+[StructLayout(LayoutKind.Sequential)]
+public class PointClass
+{
+    public int X;
+    public int Y;
+
+    public PointClass(int x, int y)
+    {
+        X = x;
+        Y = y;
     }
 }

@@ -3,5 +3,4 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-[assembly: SuppressMessage("Assertions", "xUnit2000:Constants and literals should be the expected argument")]
 [assembly: SuppressMessage("Interoperability", "CA1401:P/Invokes should not be visible")]

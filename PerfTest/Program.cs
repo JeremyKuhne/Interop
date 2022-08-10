@@ -3,13 +3,12 @@
 
 using BenchmarkDotNet.Running;
 
-namespace PerfTest
+namespace PerfTest;
+
+class Program
 {
-    class Program
+    static void Main()
     {
-        static void Main(string[] args)
-        {
-            BenchmarkRunner.Run<KeepAlive>();
-        }
+        BenchmarkRunner.Run<KeepAlive>();
     }
 }
