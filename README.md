@@ -7,7 +7,7 @@ This project provides a solution with a native library and a test project and pe
 
 ## Usage
 
-Clone and open in VS. Requires VS2019 and .NET Core 3.0. (.NET Core prerelease builds require checking "Use  previews of the .NET Core SDK" in VS Options).
+Clone and open in VS. Requires VS2022 and .NET 6.0.
 
 Select the x64 build for the solution. To explore/run the tests show the Test Explorer window and set the processor settings to x64 in the Test menu.
 
